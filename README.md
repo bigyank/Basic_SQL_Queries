@@ -1,141 +1,85 @@
-| Id  | Title        | Director       | Year | Length |
-| --- | ------------ | -------------- | ---- | ------ |
-| 1   | Toy Story    | John Lasseter  | 1995 | 81     |
-| 2   | Finding Nemo | Andrew Stanton | 2003 | 107    |
-| 3   | Ratatouille  | Brad Bird      | 2007 | 115    |
-
----
-
-SELECT
-SELECT statement returns data from the table
-
+NULL Checks
 ```sql
-SELECT title FROM movies;
-SELECT director FROM movies;
-SELECT title, director FROM movies;
-SELECT title, year FROM movies;
-SELECT * FROM movies;
+SELECT name, role FROM employees WHERE building IS NULL;
+SELECT * from buildings LEFT JOIN employees ON building_name=building WHERE building IS NULL;
 ```
-
----
-
-WHERE
-WHERE clause helps to filter the data returned from the table
-
+___
+Expressions in query
 ```sql
-SELECT id, title FROM movies  WHERE id = 6;
-SELECT title, year FROM movies WHERE year BETWEEN 2000 AND 2010;
-SELECT title, year FROM movies WHERE year < 2000 OR year > 2010;
-SELECT title, year FROM movies WHERE year <= 2003;
-SELECT title, year FROM movies WHERE year <= 2003;
-SELECT title, director FROM movies  WHERE director = "John Lasseter";
-SELECT title, director FROM movies  WHERE director != "John Lasseter";
-SELECT * FROM movies WHERE title LIKE "WALL-%";
+SELECT title, 
+(domestic_sales + international_sales) / 1000000 AS gross_sales_millions 
+FROM movies JOIN boxoffice 
+ON movies.id = boxoffice.movie_id;
 ```
-
----
-
-ORDER BY
-It orders the column alphabetically by ascending or descending order
-
 ```sql
-SELECT Director FROM movies ORDER BY director ASC;
-
-SELECT Title FROM movies ORDER BY director DESC;
+SELECT title, rating * 10 AS rating_percent
+FROM movies JOIN boxoffice
+ON movies.id = boxoffice.movie_id;
 ```
-
----
-
-Distinct
-Removes duplicate rows from the result
-
 ```sql
-SELECT DISTINCT Year From movies;
+SELECT title, (year%2) AS even_year
+FROM movies JOIN boxoffice
+ON movies.id = boxoffice.movie_id
+WHERE even_year = 0;
 ```
+___
 
----
-
-LIMIT & OFFSET
-Limits the number of result returned from the table
-Offset will specify where to begin counting the number rows from.
-
+Aggregates Functions
+Find the longest time that an employee has been at the studio
 ```sql
-SELECT * from movies LIMIT 5;
-
-SELECT * from movies ORDER BY Title ASC LIMIT 5;
-
-SELECT * from movies ORDER BY Year DESC LIMIT 5;
-
-SELECT DISTINCT year from movies ORDER BY Title ASC LIMIT 5;
-
-SELECT title FROM movies ORDER BY title ASC LIMIT 5 OFFSET 5;
+SELECT MAX(years_employed) FROM employees;
 ```
-
----
-
-| City        | Country       | Population | Latitude  | Longitude   |
-| ----------- | ------------- | ---------- | --------- | ----------- |
-| Guadalajara | Mexico        | 1500800    | 20.659699 | -103.349609 |
-| Toronto     | Canada        | 2795060    | 43.653226 | -79.383184  |
-| Houston     | United States | 2195914    | 29.760427 | -95.369803  |
-| Havana      | Cuba          | 2106146    | 23.05407  | -82.345189  |
-
-List all the Canadian cities and their populations
-
+For each role, find the average number of years employed by employees in that role
 ```sql
-SELECT * FROM north_american_cities WHERE country = "Canada"
+SELECT role, AVG(years_employed)FROM employees GROUP BY role;
 ```
-
-Order all the cities in the United States by their latitude from north to south
-
+Find the total number of employee years worked in each building
 ```sql
-SELECT * FROM north_american_cities WHERE country = "United States" ORDER BY Latitude DESC;
+SELECT building, SUM(years_employed) AS Total_Years
+FROM employees 
+GROUP BY building;
 ```
-
-List all the cities west of Chicago, ordered from west to east
-
+Find the number of Artists in the studio (without a **HAVING** clause
 ```sql
-SELECT city, longitude FROM north_american_cities WHERE longitude < -87.629798 ORDER BY longitude ASC;
+SELECT role, COUNT(*) as Number_of_artists
+FROM employees
+WHERE role = "Artist";
 ```
-
-List the two largest cities in Mexico (by population)
-
+Find the number of Employees of each role in the studio
 ```sql
-SELECT * FROM north_american_cities WHERE Country="Mexico" ORDER BY Population DESC LIMIT 2;
+SELECT role, COUNT(*) as Number_of_artists
+FROM employees GROUP BY Role;
 ```
-
-List the third and fourth largest cities (by population) in the United States and their population
-
+Find the total number of years employed by all Engineers
 ```sql
-SELECT * FROM north_american_cities WHERE Country="United States" ORDER BY Population DESC LIMIT 2 OFFSET 2;
+SELECT role, SUM(years_employed) AS total_years 
+FROM employees 
+GROUP BY Role HAVING role="Engineer";
 ```
+___
 
----
-
-JOIN
-combines row data across two separate tables using this unique key
-
+ORDER OF EXECUTION
+1. `FROM` and `JOIN`s
+2. `WHERE`
+3. `GROUP BY`
+4.  `HAVING`
+5.  `SELECT`
+6.  `DISTINCT`
+7.  `ORDER BY`
+8. `LIMIT` / `OFFSET`
+___
+Find the number of movies each director has directed
 ```sql
-SELECT
-bld.*, emp.years_employed FROM buildings AS bld LEFT JOIN employees AS emp ON bld.building_name = emp.building;
+SELECT Title, Director, COUNT(*) AS Number_of_movies 
+FROM movies GROUP BY director 
+ORDER BY Number_of_movies DESC;
 ```
-
-Find the domestic and international sales for each movie
-
+Find the total domestic and international sales that can be attributed to each director
 ```sql
-SELECT * FROM movies INNER JOIN BoxOffice on movies.id = BoxOffice.Movie_id ORDER BY id;
+SELECT director, 
+SUM(domestic_sales + international_sales) as 
+Cumulative_sales_from_all_movies
+FROM movies INNER JOIN boxoffice ON id = movie_id
+GROUP BY director;
 ```
-
-Show the sales numbers for each movie that did better internationally rather than domestically
-
-```sql
-SELECT * FROM movies INNER JOIN BoxOffice on movies.id = BoxOffice.Movie_id WHERE domestic_sales < international_sales ORDER BY international_sales DESC;
-```
-
-List all the movies by their ratings in descending order
-
-```sql
-SELECT * FROM movies INNER JOIN BoxOffice on movies.id = BoxOffice.Movie_id ORDER BY rating DESC;
-```
-
----
+___
